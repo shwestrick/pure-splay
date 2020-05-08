@@ -1,10 +1,7 @@
 # pure-splay
 
-I wrote this code because I could not find a reasonably concise and simple
-implementation of splay trees in a purely functional setting. Although an
-imperative implementation is of course advantageous for performance, the
-purely functional approach is nice for explaining and understanding the
-algorithm.
+I wrote this code because I wanted to better understand the splaying algorithm,
+but could not find a reasonably concise and simple implementation.
 
 There are two reasonable ways to implement splay trees: bottom-up, and top-down.
 Traditionally, the splaying algorithm is described in a bottom-up

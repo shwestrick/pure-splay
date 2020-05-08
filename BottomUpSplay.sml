@@ -1,3 +1,7 @@
+(* Author: Sam Westrick (samwestrick.com)
+ * May 2020
+ *)
+
 functor BottomUpSplay (Key: KEY): SPLAY =
 struct
   structure Key = Key
@@ -5,49 +9,6 @@ struct
   type k = Key.t
 
   datatype t = Empty | Node of t * k * t
-
-  (* A bottom-up splay access (insert or lookup) operates in two phases.
-   * First, we traverse the path to the desired node, and then we perform
-   * rotations on the way back up, bringing the desired node to the root and
-   * encouraging the accessed path to become more balanced. To implement this,
-   * we'll write two functions: `path` and `splay`.
-   *
-   * Access paths are implemented by recording, at each step, whether the
-   * next access is down-to-the-right or down-to-the-left. This produces a
-   * list of "contexts", where each context is a parent node with a hole.
-   *
-   *   1. Right(L,k): the parent Node(L,k,_) is missing a right child.
-   *
-   *                                  k   <-- parent
-   *                                 / \
-   *                                L   * <-- you are here
-   *
-   *   2. Left(k,R): the parent Node(_,k,R) is missing a right child.
-   *
-   *                     parent -->   k
-   *                                 / \
-   *               you are here --> *   R
-   *
-   * By pushing elements onto the context list in the order they were accessed,
-   * the "front" of the list is always the most recently accessed element.
-   *
-   * A "path" is then just a list of contexts together with the subtree whose
-   * root is the targeted element. For example, consider searching for `y` in
-   * the following tree.
-   *
-   *            z
-   *           / \         Resulting path:
-   *          x   D          ( subtree,     context list )
-   *         / \           = ( Node(B,y,C), [Right(A,x), Left(z,D)] )
-   *        A   y
-   *           / \
-   *          B   C
-   *
-   * With an access path in hand, we can splay it by performing the various
-   * cases: zig-zig, zig-zag, etc. Each of the cases consumes two elements
-   * off the end of the access path, except for the single zig/zag cases which
-   * finish off an odd-length path.
-   *)
 
   datatype context =
     Right of t * k
@@ -64,6 +25,37 @@ struct
         | EQUAL => (t, anc)
         | GREATER => path k (R, Right (L, x) :: anc)
 
+  (* An explanation of what's going on in this function, splay':
+   *
+   *   - This is a helper function for implementing the primary splay function,
+   *   further below. The primary splay function has a "center" key, x, to be
+   *   put at the root. This center key is not named by splay', but it can be
+   *   helpful to understand the algorithm if you imagine that it is there.
+   *
+   *   - splay' accumulates a tuple of trees (L, R) which will be the left and
+   *   right subtrees of the implicit center key.
+   *
+   *   - Each case consumes either one or two parent nodes off the context list
+   *   and performs rotations according to one of the zig/zag cases of the
+   *   splay algorithm. This continues until we have consumed the entire
+   *   ancestor context.
+   *
+   *   - Subtrees are named A, B, C, D to respect in-order traversal (i.e.
+   *   notice that whenever we construct nodes, the names A, B, C, D always
+   *   appear in order from left to right)
+   *
+   *   - The names `p` and `g` are used to refer to the parent and grandparent
+   *   of the implicit center key. For example, in the zig-zag case, if `x` is
+   *   the implicit center key, we perform the following transformation:
+   *
+   *             g                        x
+   *            / \                     /   \
+   *           p   D       ===>       p       g
+   *          / \                    / \     / \
+   *         A   x                  A   B   C   D
+   *            / \
+   *           B   C
+   *)
   fun splay' (A, B) [] =
         (* done! *)
         (A, B)
@@ -92,9 +84,12 @@ struct
         (* zag-zig *)
         splay' (Node (A, g, B), Node (C, p, D)) anc
 
-  fun splay (l, k, r) anc =
+  (* Take the subtree Node(l,x,r) and splay x to the root by consuming the
+   * ancestor context `anc`. The key x is the implicit center key for the
+   * call to splay'. *)
+  fun splay (l, x, r) anc =
     let val (l', r') = splay' (l, r) anc
-    in Node (l', k, r')
+    in Node (l', x, r')
     end
 
   fun insert k t =
