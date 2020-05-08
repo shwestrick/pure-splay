@@ -9,14 +9,34 @@ manner, but the top-down algorithm is preferable in practice, because it does
 not require parent pointers (or, in the purely functional setting, a
 [zipper](https://en.wikipedia.org/wiki/Zipper_%28data_structure%29)).
 
-This code currently only contains a bottom-up implementation, but I will
-eventually add a top-down implementation too.
+This code currently contains two implementations:
+  1. A bottom-up implementation ([`BottomUpSplay`](BottomUpSplay.sml),
+  described [below](#bottom-up-splaying), which is equivalent to the original
+  splay algorithm.
+  2. A top-down implementation
+  ([`OkasakiTopDownSplay`](OkasakiTopDownSplay.sml)) inspired by
+  Chris Okasaki's splay heap from his book,
+  [Purely Functional Data Structures](https://doi.org/10.1017/CBO9780511530104).
+  This implementation is *not exactly* equivalent to the original splay
+  algorithm.
 
-You can run it with SML/NJ like this:
+I'm now working on another top-down implementation, with the hope of being
+exactly equivalent to the original splay algorithm and indistinguishable
+from the bottom-up algorithm.
+
+You can run this code with SML/NJ:
 ```
 $ sml splay.cm
-- structure S = BottomUpSplay(IntKey);
-- S.fromList [9,7,5,3,1,8,6,2,4];
+- val keys = [9,7,5,3,1,8,6,2,4];
+
+- structure BU = BottomUpSplay(IntKey);
+- BU.fromList keys;
+
+- structure OTD = OkasakiTopDownSplay(IntKey);
+- OTD.fromList keys;
+... (* Note slight difference in final structure.
+     * This algorithm is not exactly equivalent to
+     * the original splay algorithm. *)
 ```
 
 ## Trees and Keys
