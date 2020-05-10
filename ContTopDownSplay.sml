@@ -12,94 +12,92 @@ struct
 
   (* can we do it with continuations?? pass in odd/even continuations *)
 
-  fun splayLeftLeft x ((T, p, C), g, D) oneUp twoUp =
-    let
-      fun zigzig (A, B) = twoUp (A, Node (B, p, Node (C, g, D)))
-    in
-      case T of
-        Empty => zigzig (Empty, Empty)
-      | Node (A, k, B) =>
-          case Key.compare (x, k) of
-            EQUAL   => zigzig (A, B)
-          | LESS    => splayLeftLeft  x ((A, k, B), p, C) zigzig oneUp
-          | GREATER => splayLeftRight x ((A, k, B), p, C) zigzig oneUp
-    end
+  fun left (Node (A, x, B)) = A
 
-  and splayLeftRight x ((A, p, T), g, D) oneUp twoUp =
-    let
-      fun zigzag (B, C) = twoUp (Node (A, p, B), Node (C, g, D))
-    in
-      case T of
-        Empty => zigzag (Empty, Empty)
-      | Node (B, k, C) =>
-          case Key.compare (x, k) of
-            EQUAL   => zigzag (B, C)
-          | LESS    => splayRightLeft  x (A, p, (B, k, C)) zigzag oneUp
-          | GREATER => splayRightRight x (A, p, (B, k, C)) zigzag oneUp
-    end
+  fun right (Node (A, x, B)) = B
 
-  and splayRightLeft x (A, g, (T, p, D)) oneUp twoUp =
-    let
-      fun zagzig (B, C) = twoUp (Node (A, g, B), Node (C, p, D))
-    in
-      case T of
-        Empty => zagzig (Empty, Empty)
-      | Node (B, k, C) =>
-          case Key.compare (x, k) of
-            EQUAL   => zagzig (B, C)
-          | LESS    => splayLeftLeft  x ((B, k, C), p, D) zagzig oneUp
-          | GREATER => splayLeftRight x ((B, k, C), p, D) zagzig oneUp
-    end
+  fun zigzig (Node (Node (_, p, C), g, D)) (A, B) =
+    (A, Node (B, p, Node (C, g, D)))
 
-  and splayRightRight x (A, g, (B, p, T)) oneUp twoUp =
-    let
-      fun zagzag (C, D) = twoUp (Node (Node (A, g, B), p, C), D)
-    in
-      case T of
-        Empty => zagzag (Empty, Empty)
-      | Node (C, k, D) =>
-          case Key.compare (x, k) of
-            EQUAL   => zagzag (C, D)
-          | LESS    => splayRightLeft  x (B, p, (C, k, D)) zagzag oneUp
-          | GREATER => splayRightRight x (B, p, (C, k, D)) zagzag oneUp
-    end
+  fun zigzag (Node (Node (A, p, _), g, D)) (B, C) =
+    (Node (A, p, B), Node (C, g, D))
+
+  fun zagzig (Node (A, g, Node (_, p, D))) (B, C) =
+    (Node (A, g, B), Node (C, p, D))
+
+  fun zagzag (Node (A, g, Node (B, p, _))) (C, D) =
+    (Node (Node (A, g, B), p, C), D)
+
+  fun zig (Node (_, p, C)) (A, B) =
+    (A, Node (B, p, C))
+
+  fun zag (Node (A, p, _)) (B, C) =
+    (Node (A, p, B), C)
+
+  fun splayLeftLeft x t oneUp twoUp =
+    case left (left t) of
+      Empty => twoUp (zigzig t (Empty, Empty))
+    | Node (L, k, R) =>
+        case Key.compare (x, k) of
+          EQUAL   => twoUp (zigzig t (L, R))
+        | LESS    => splayLeftLeft  x (left t) (twoUp o zigzig t) oneUp
+        | GREATER => splayLeftRight x (left t) (twoUp o zigzig t) oneUp
+
+  and splayLeftRight x t oneUp twoUp =
+    case right (left t) of
+      Empty => twoUp (zigzag t (Empty, Empty))
+    | Node (L, k, R) =>
+        case Key.compare (x, k) of
+          EQUAL   => twoUp (zigzag t (L, R))
+        | LESS    => splayRightLeft  x (left t) (twoUp o zigzag t) oneUp
+        | GREATER => splayRightRight x (left t) (twoUp o zigzag t) oneUp
+
+  and splayRightLeft x t oneUp twoUp =
+    case left (right t) of
+      Empty => twoUp (zagzig t (Empty, Empty))
+    | Node (L, k, R) =>
+        case Key.compare (x, k) of
+          EQUAL   => twoUp (zagzig t (L, R))
+        | LESS    => splayLeftLeft   x (right t) (twoUp o zagzig t) oneUp
+        | GREATER => splayLeftRight  x (right t) (twoUp o zagzig t) oneUp
+
+  and splayRightRight x t oneUp twoUp =
+    case right (right t) of
+      Empty => twoUp (zagzag t (Empty, Empty))
+    | Node (L, k, R) =>
+        case Key.compare (x, k) of
+          EQUAL   => twoUp (zagzag t (L, R))
+        | LESS    => splayRightLeft  x (right t) (twoUp o zagzag t) oneUp
+        | GREATER => splayRightRight x (right t) (twoUp o zagzag t) oneUp
 
   fun id x = x
 
-  fun splayLeft x (T, p, C) =
-    let
-      fun zig (A, B) = (A, Node (B, p, C))
-    in
-      case T of
-        Empty => zig (Empty, Empty)
-      | Node (A, k, B) =>
-          case Key.compare (x, k) of
-            EQUAL   => zig (A, B)
-          | LESS    => splayLeftLeft  x ((A, k, B), p, C) zig id
-          | GREATER => splayLeftRight x ((A, k, B), p, C) zig id
-    end
-
-  fun splayRight x (A, p, T) =
-    let
-      fun zag (B, C) = (Node (A, p, B), C)
-    in
-      case T of
-        Empty => zag (Empty, Empty)
-      | Node (B, k, C) =>
-          case Key.compare (x, k) of
-            EQUAL   => zag (B, C)
-          | LESS    => splayRightLeft  x (A, p, (B, k, C)) zag id
-          | GREATER => splayRightRight x (A, p, (B, k, C)) zag id
-    end
-
-  fun splaySplit x T =
-    case T of
-      Empty => (Empty, Empty)
-    | Node (A, k, B) =>
+  fun splayLeft x t =
+    case left t of
+      Empty => zig t (Empty, Empty)
+    | Node (L, k, R) =>
         case Key.compare (x, k) of
-          EQUAL => (A, B)
-        | LESS => splayLeft x (A, k, B)
-        | GREATER => splayRight x (A, k, B)
+          EQUAL   => zig t (L, R)
+        | LESS    => splayLeftLeft  x t (zig t) id
+        | GREATER => splayLeftRight x t (zig t) id
+
+  fun splayRight x t =
+    case right t of
+      Empty => zag t (Empty, Empty)
+    | Node (L, k, R) =>
+        case Key.compare (x, k) of
+          EQUAL   => zag t (L, R)
+        | LESS    => splayRightLeft  x t (zag t) id
+        | GREATER => splayRightRight x t (zag t) id
+
+  fun splaySplit x t =
+    case t of
+      Empty => (Empty, Empty)
+    | Node (L, k, R) =>
+        case Key.compare (x, k) of
+          EQUAL => (L, R)
+        | LESS => splayLeft x t
+        | GREATER => splayRight x t
 
   fun insert x t =
     let
