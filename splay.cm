@@ -5,5 +5,9 @@ Group is
   keys/IntKey.sml
 
   SPLAY.sig
+
   BottomUpSplay.sml
+
   OkasakiTopDownSplay.sml
+  brainstorm/AwfulTopDownSplay.sml
+  ContTopDownSplay.sml

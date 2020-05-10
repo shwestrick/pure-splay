@@ -1,28 +1,27 @@
 # pure-splay
 
-I wrote this code because I wanted to better understand the splaying algorithm,
-but could not find a reasonably concise and simple implementation.
+I wrote this code to better understand the splaying algorithm. My goal was to
+find a reasonably concise and simple implementation.
 
-There are two reasonable ways to implement splay trees: bottom-up, and top-down.
-Traditionally, the splaying algorithm is described in a bottom-up
-manner, but the top-down algorithm is preferable in practice, because it does
-not require parent pointers (or, in the purely functional setting, a
-[zipper](https://en.wikipedia.org/wiki/Zipper_%28data_structure%29)).
+As far as I know, there are two ways to implement splay trees: bottom-up, and
+top-down. Traditionally, the splaying algorithm is described in a bottom-up
+manner, but the top-down algorithm can be preferable in practice, because it
+does not require parent pointers (or, in the purely functional setting,
+a [zipper](https://en.wikipedia.org/wiki/Zipper_%28data_structure%29)).
 
-This code currently contains two implementations:
-  1. A bottom-up implementation ([`BottomUpSplay`](BottomUpSplay.sml),
+This code currently contains three implementations:
+  1. A bottom-up implementation [`BottomUpSplay`](BottomUpSplay.sml),
   described [below](#bottom-up-splaying), which is equivalent to the original
   splay algorithm.
-  2. A top-down implementation
-  ([`OkasakiTopDownSplay`](OkasakiTopDownSplay.sml)) inspired by
+  2. A top-down implementation [`ContTopDownSplay`](ContTopDownSplay.sml) in
+  continuation-passing style. This code is equivalent to the original
+  algorithm, but I've only implemented insertions so far.
+  3. A top-down implementation
+  [`OkasakiTopDownSplay`](OkasakiTopDownSplay.sml), inspired by
   Chris Okasaki's splay heap from his book,
   [Purely Functional Data Structures](https://doi.org/10.1017/CBO9780511530104).
   This implementation is *not exactly* equivalent to the original splay
   algorithm.
-
-I'm now working on another top-down implementation, with the hope of being
-exactly equivalent to the original splay algorithm and indistinguishable
-from the bottom-up algorithm.
 
 You can run this code with SML/NJ:
 ```
@@ -30,10 +29,16 @@ $ sml splay.cm
 - val keys = [9,7,5,3,1,8,6,2,4];
 
 - structure BU = BottomUpSplay(IntKey);
-- BU.fromList keys;
+- val t = BU.fromList keys;
+...
+
+- structure CTD = ContTopDownSplay(IntKey);
+- val t' = CTD.fromList keys;
+... (* Same as t. Same as bottom-up algorithm,
+     * but very different implementations. *)
 
 - structure OTD = OkasakiTopDownSplay(IntKey);
-- OTD.fromList keys;
+- val t'' = OTD.fromList keys;
 ... (* Note slight difference in final structure.
      * This algorithm is not exactly equivalent to
      * the original splay algorithm. *)
